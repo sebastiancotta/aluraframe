@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <script src="js/app/models/Negociacao.js"></script>
+    <script>
+        var connection;
+        var openRequest = window.indexedDB.open('aluraFrame', 2);
+
+        openRequest.onupgradeneeded = e => {
+            console.log('Criando ou atualizando o banco');
+            let myConnection = e.target.result;
+
+            if (myConnection.objectStoreNames.contains('negociacoes')){
+                myConnection.deleteObjectStore('negociacoes');
+                console.log('Apagou o banco');
+            }
+
+            myConnection.createObjectStore('negociacoes', { autoIncrement: true});
+        }
+
+        openRequest.onsuccess = e => {
+            console.log('Conexão realizada com sucesso');
+            connection = e.target.result;
+        }
+
+        openRequest.onerror = e => {
+            console.log(e.target.error);
+        }
+
+        function adiciona() {
+
+            let transaction = connection.transaction(['negociacoes'], 'readwrite');
+
+            let store = transaction.objectStore('negociacoes');
+
+            let necociacao = new Negociacao(new Date(), 200, 1);
+
+            let request = store.add(necociacao);
+
+            request.onsuccess = e => console.log('Negociação incluída com sucesso');
+
+            request.onerror = e => console.log(e.target.error);
+        }
+    </script>
+</body>
+</html>
