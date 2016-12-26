@@ -22,6 +22,29 @@
             myConnection.createObjectStore('negociacoes', { autoIncrement: true});
         }
 
+        function listaTodos() {
+            let transaction = connection.transaction('[negociacoes]', 'readwrite');
+
+            let store = transaction.objectStore('negociacoes');
+
+            let negociacoes;
+
+            let curso = store.openCursor();
+
+            curso.onsucess = e => {
+                if(e.target.result){
+                   negociacoes.push(e.target.result.value);
+                   e.target.result.continue;     
+                } else {
+                    console.log(negociacoes);
+                }
+            }
+
+            curso.onerror = e => {
+                console.log('error' + e.target.error.name);
+            }
+        }
+
         openRequest.onsuccess = e => {
             console.log('Conexão realizada com sucesso');
             connection = e.target.result;
