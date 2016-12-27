@@ -8,7 +8,7 @@
     <script src="js/app/models/Negociacao.js"></script>
     <script>
         var connection;
-        var openRequest = window.indexedDB.open('aluraFrame', 2);
+        var openRequest = window.indexedDB.open('aluraFrame', 3);
 
         openRequest.onupgradeneeded = e => {
             console.log('Criando ou atualizando o banco');
@@ -23,24 +23,29 @@
         }
 
         function listaTodos() {
-            let transaction = connection.transaction('[negociacoes]', 'readwrite');
+
+            let transaction = connection.transaction(['negociacoes'], 'readwrite');
 
             let store = transaction.objectStore('negociacoes');
 
-            let negociacoes;
+            let negociacoes = [];
 
-            let curso = store.openCursor();
+            let cursor = store.openCursor();
 
-            curso.onsucess = e => {
-                if(e.target.result){
-                   negociacoes.push(e.target.result.value);
-                   e.target.result.continue;     
+            cursor.onsuccess = e => {
+
+                let atual = e.target.result;
+
+                if(atual) {
+                    let dado = atual.value;
+                   negociacoes.push(new Negociacao(dado._data, dado._quantidade, dado._valor));
+                  atual.continue();     
                 } else {
                     console.log(negociacoes);
                 }
             }
 
-            curso.onerror = e => {
+            cursor.onerror = e => {
                 console.log('error' + e.target.error.name);
             }
         }
