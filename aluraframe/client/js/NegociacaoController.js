@@ -9,6 +9,23 @@ class NegociacaoController {
 		this._listaNegociacoes = new Bind(new ListaNegociacoes(), new NegociacoesView($('#negociacoesView')), 'adiciona', 'esvazia', 'ordena', 'inverteOrdem');		
 		this._negociacaoService = new NegociacaoService();
 		this._ordemAtual = ''; // quando a página for carregada, não tem critério. Só passa a ter quando ele começa a clicar nas colunas
+
+		this._init();
+	}
+
+	_init() {
+		this._negociacaoService
+				.lista()
+				.then(negociacoes => 
+					negociacoes.forEach(dado => 
+							 this._listaNegociacoes.adiciona(
+                    		 new Negociacao(dado._data, dado._quantidade, dado._valor))))
+				.catch(erro => this._mensagem.texto = erro);
+		setInterval(() => {
+			console.log('Importando negociações');
+			this.importaNegociacoes();
+		}, 3000)					
+
 	}
 	
 	ordena(coluna) {
@@ -23,36 +40,42 @@ class NegociacaoController {
 	adicionar(event) {
 		event.preventDefault();
 					
-		this._listaNegociacoes.adiciona(this._criaNegociacao());
-	    // nova mensagem e atualizado a view
-        this._mensagem.texto = 'Negociação adicionada com sucesso';
-		this._limpaCampos();
-		this._data.focus();	
+		let negociacao = this._criaNegociacao();
+
+		this._negociacaoService		
+			.cadastra(negociacao)
+			.then(mensagem => {
+				this._listaNegociacoes.adiciona(negociacao);
+				this._mensagem.texto = mensagem;
+				this._limpaCampos();
+			}).catch(error => this._mensagem.texto = error);
 	}
 	
 	importaNegociacoes() {
         this._negociacaoService
-            .obterNegociacoes()
+			.importa(this._listaNegociacoes)
             .then(negociacoes => negociacoes.forEach(negociacao => {
                 this._listaNegociacoes.adiciona(negociacao);
-                this._mensagem.texto = 'Negociações do período importadas'   
+                this._mensagem.texto = 'Negociações do período importadas';   
             }))
             .catch(erro => this._mensagem.texto = erro); 
 	}
 	
-	apaga() {
-		
-		this._listaNegociacoes.esvazia();
-		
-		// exibe uma nova mensagem
-		this._mensagem.texto = "Negociações removidas com sucesso";
+	apaga() {		
+			this._negociacaoService
+			.apaga()
+			.then(mensagem => {
+				this._mensagem.texto = mensagem;
+				this._listaNegociacoes.esvazia();
+			}).catch(error => this._mensagem.texto = error);
+
 	}
 	
 	_criaNegociacao() {
         return new Negociacao(
                 DateHelper.textoParaData(this._data.value),
-                this._quantidade.value,
-                this._valor.value
+				parseInt(this._quantidade.value),
+				parseFloat(this._valor.value)
             );   
     }
 	
